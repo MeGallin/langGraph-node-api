@@ -7,9 +7,13 @@
     "dev": "nodemon ../server.js"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.49",
+    "@langchain/openai": "^0.5.7",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "langchain": "^0.3.24",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
