@@ -10,6 +10,10 @@ const {
 // Database connection singleton
 let db;
 
+// Memory configuration
+const MEMORY_RETENTION_DAYS = 7; // Keep memory for 7 days
+const MEMORY_CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
 /**
  * Get the SQLite database connection
  * @returns {Promise<object>} - The database connection
@@ -34,10 +38,53 @@ async function getDB() {
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Create an index on session_id for faster lookups
+    await db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_session_id ON agent_conversation(session_id)
+    `);
+
+    // Create an index on timestamp for faster cleanup
+    await db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_timestamp ON agent_conversation(timestamp)
+    `);
   }
 
   return db;
 }
+
+/**
+ * Clean up old memory entries
+ * @returns {Promise<number>} - Number of deleted entries
+ */
+async function cleanupOldMemory() {
+  try {
+    const database = await getDB();
+
+    // Calculate the cutoff date (e.g., 7 days ago)
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - MEMORY_RETENTION_DAYS);
+    const cutoffTimestamp = cutoffDate.toISOString();
+
+    // Delete old entries
+    const result = await database.run(
+      `DELETE FROM agent_conversation WHERE timestamp < ?`,
+      cutoffTimestamp,
+    );
+
+    if (result.changes > 0) {
+      console.log(`Cleaned up ${result.changes} old memory entries`);
+    }
+
+    return result.changes;
+  } catch (error) {
+    console.error('Error cleaning up old memory:', error);
+    return 0;
+  }
+}
+
+// Start the cleanup interval
+setInterval(cleanupOldMemory, MEMORY_CLEANUP_INTERVAL);
 
 /**
  * Create a SQLite-based memory system for conversation history
