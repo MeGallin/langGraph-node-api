@@ -8,6 +8,7 @@ const { createConditionNode } = require('../nodes/conditionNode');
 const { createReceptionAgentNode } = require('../nodes/receptionAgentNode');
 const { createRestaurantAgentNode } = require('../nodes/restaurantAgentNode');
 const { createMaintenanceAgentNode } = require('../nodes/maintenanceAgentNode');
+const { createFinanceAgentNode } = require('../nodes/financeAgentNode');
 const { createEndNode } = require('../nodes/endNode');
 const { extractUserInfo } = require('../utils/userInfoExtractor');
 
@@ -23,12 +24,13 @@ async function buildLangGraph() {
   const receptionNode = createReceptionAgentNode({ llm, memory });
   const restaurantNode = createRestaurantAgentNode({ llm, memory });
   const maintenanceNode = createMaintenanceAgentNode({ llm, memory });
+  const financeNode = createFinanceAgentNode({ llm, memory });
   const endNode = createEndNode();
 
   /**
    * Graph execution flow:
    * 1. Condition Node → Determine which agent to route to (or continue with current agent)
-   * 2. Agent Node (Reception/Restaurant/Maintenance) → Process request
+   * 2. Agent Node (Reception/Restaurant/Maintenance/Finance) → Process request
    * 3. End Node → Finalize session
    */
   const executeGraph = async (state) => {
@@ -76,6 +78,10 @@ async function buildLangGraph() {
         case 'maintenance':
           console.log(`👨‍🔧 Routing to Maintenance Agent`);
           currentState = await maintenanceNode(currentState);
+          break;
+        case 'finance':
+          console.log(`💰 Routing to Finance Agent`);
+          currentState = await financeNode(currentState);
           break;
         default:
           console.log(`👨‍💼 Routing to Reception Agent`);

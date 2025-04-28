@@ -118,6 +118,45 @@ const KEYWORDS = {
     information: 1,
     question: 1,
   },
+  // Add finance keyword category
+  finance: {
+    // High priority finance keywords (weight 3)
+    bill: 3,
+    payment: 3,
+    invoice: 3,
+    charge: 3,
+    'credit card': 3,
+    refund: 3,
+    deposit: 3,
+    receipt: 3,
+    billing: 3,
+    'account statement': 3,
+    'payment method': 3,
+
+    // Medium priority finance keywords (weight 2)
+    pay: 2,
+    transaction: 2,
+    expense: 2,
+    account: 2,
+    fee: 2,
+    price: 2,
+    cost: 2,
+    credit: 2,
+    debit: 2,
+    balance: 2,
+
+    // Low priority finance keywords (weight 1)
+    money: 1,
+    cash: 1,
+    currency: 1,
+    dollar: 1,
+    euro: 1,
+    pound: 1,
+    checkout: 1,
+    paid: 1,
+    financial: 1,
+    wallet: 1,
+  },
 };
 
 // Topic change indicators
@@ -171,7 +210,62 @@ const DOMAIN_SPECIFIC_PHRASES = {
     'reservation details',
     'front desk',
   ],
+  // Add finance-specific phrases
+  finance: [
+    'speak with finance',
+    'billing department',
+    'payment issue',
+    'pay my bill',
+    'charge on my account',
+    'check my balance',
+    'make a payment',
+    'need a receipt',
+    'billing question',
+    'payment methods',
+    'dispute a charge',
+    'refund request',
+  ],
 };
+
+/**
+ * Calculate a weighted score for keyword matches in a message
+ * @param {string} message - The message to check
+ * @param {Object} weightedKeywords - Object with keywords as keys and weights as values
+ * @returns {number} - The weighted score
+ */
+function calculateWeightedScore(message, weightedKeywords) {
+  return Object.entries(weightedKeywords).reduce((score, [keyword, weight]) => {
+    return message.includes(keyword) ? score + weight : score;
+  }, 0);
+}
+
+/**
+ * Count the number of keyword matches in a message (unweighted)
+ * @param {string} message - The message to check
+ * @param {Array<string>} keywords - The keywords to look for
+ * @returns {number} - The number of matches
+ */
+function countKeywordMatches(message, keywords) {
+  return keywords.reduce((count, keyword) => {
+    return message.includes(keyword) ? count + 1 : count;
+  }, 0);
+}
+
+/**
+ * Determine if a message indicates a topic change
+ * @param {string} message - User message to analyze
+ * @returns {boolean} - Whether this is likely a new topic
+ */
+function isNewTopic(message) {
+  // Short messages are likely responses to previous context, not new topics
+  if (message.split(' ').length <= 3) {
+    return false;
+  }
+
+  return TOPIC_CHANGE_INDICATORS.some((indicator) =>
+    message.includes(indicator),
+  );
+}
 
 /**
  * Create a condition node that determines which agent should handle a request
@@ -207,6 +301,7 @@ const createConditionNode = () => {
       restaurant: calculateWeightedScore(userMessage, KEYWORDS.restaurant),
       maintenance: calculateWeightedScore(userMessage, KEYWORDS.maintenance),
       reception: calculateWeightedScore(userMessage, KEYWORDS.reception),
+      finance: calculateWeightedScore(userMessage, KEYWORDS.finance),
     };
 
     // Count keyword matches for logging
@@ -223,6 +318,7 @@ const createConditionNode = () => {
         userMessage,
         Object.keys(KEYWORDS.reception),
       ),
+      finance: countKeywordMatches(userMessage, Object.keys(KEYWORDS.finance)),
     };
 
     // Log the keyword matches and scores for debugging
@@ -241,6 +337,11 @@ const createConditionNode = () => {
     if (scores.maintenance > highestScore) {
       bestAgent = 'maintenance';
       highestScore = scores.maintenance;
+    }
+
+    if (scores.finance > highestScore) {
+      bestAgent = 'finance';
+      highestScore = scores.finance;
     }
 
     // If we have a clear winner with a good score, route to that agent
@@ -321,45 +422,5 @@ const createConditionNode = () => {
 
   return conditionNode;
 };
-
-/**
- * Calculate a weighted score for keyword matches in a message
- * @param {string} message - The message to check
- * @param {Object} weightedKeywords - Object with keywords as keys and weights as values
- * @returns {number} - The weighted score
- */
-function calculateWeightedScore(message, weightedKeywords) {
-  return Object.entries(weightedKeywords).reduce((score, [keyword, weight]) => {
-    return message.includes(keyword) ? score + weight : score;
-  }, 0);
-}
-
-/**
- * Count the number of keyword matches in a message (unweighted)
- * @param {string} message - The message to check
- * @param {Array<string>} keywords - The keywords to look for
- * @returns {number} - The number of matches
- */
-function countKeywordMatches(message, keywords) {
-  return keywords.reduce((count, keyword) => {
-    return message.includes(keyword) ? count + 1 : count;
-  }, 0);
-}
-
-/**
- * Determine if a message indicates a topic change
- * @param {string} message - User message to analyze
- * @returns {boolean} - Whether this is likely a new topic
- */
-function isNewTopic(message) {
-  // Short messages are likely responses to previous context, not new topics
-  if (message.split(' ').length <= 3) {
-    return false;
-  }
-
-  return TOPIC_CHANGE_INDICATORS.some((indicator) =>
-    message.includes(indicator),
-  );
-}
 
 module.exports = { createConditionNode };
