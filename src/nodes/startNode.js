@@ -1,25 +1,31 @@
-const { createLLM } = require('../config/llmConfig');
-const { SqliteMemory } = require('../memory/sqliteMemory');
+const { ChatOpenAI } = require('@langchain/openai');
+const { createSQLiteMemory } = require('../memory/sqliteMemory');
 
+/**
+ * Creates and initializes the components needed for the LangGraph
+ * @returns {Object} The initialized components
+ */
 const createStartNode = () => {
-  // Use the centralized LLM configuration
-  const llm = createLLM({
-    modelName: 'gpt-4o-mini',
-    temperature: 0.5,
-    streaming: true,
+  // Initialize the LLM
+  const llm = new ChatOpenAI({
+    temperature: 0.7,
+    modelName: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
   });
 
-  const memory = new SqliteMemory({
-    dbPath: './data/agent_memory.db',
+  // Initialize memory with SQLite
+  const memory = createSQLiteMemory({
+    tableName: 'agent_conversation',
+    sessionIdKey: 'sessionId',
+    memoryKey: 'messages',
   });
 
-  const initialState = {
+  // Initial state
+  const state = {
     messages: [],
-    userInfo: null,
-    sessionId: null,
+    userInfo: {},
   };
 
-  return { llm, memory, state: initialState };
+  return { llm, memory, state };
 };
 
 module.exports = { createStartNode };
