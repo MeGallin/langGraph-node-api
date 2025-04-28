@@ -1,4 +1,4 @@
-const { ChatOpenAI } = require('@langchain/openai');
+const { createLLM } = require('../config/llmConfig');
 const { createSQLiteMemory } = require('../memory/sqliteMemory');
 
 /**
@@ -6,10 +6,10 @@ const { createSQLiteMemory } = require('../memory/sqliteMemory');
  * @returns {Object} The initialized components
  */
 const createStartNode = () => {
-  // Initialize the LLM
-  const llm = new ChatOpenAI({
+  // Initialize the LLM using the factory function
+  const llm = createLLM({
     temperature: 0.7,
-    modelName: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+    modelName: process.env.OPENAI_MODEL || 'gpt-4o-mini',
   });
 
   // Initialize memory with SQLite
