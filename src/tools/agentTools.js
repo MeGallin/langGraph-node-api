@@ -46,6 +46,72 @@ const createAgentTools = () => {
     }),
 
     new DynamicTool({
+      name: 'finance-calculator',
+      description:
+        'Perform financial calculations like tax, tips, discounts, and interest calculations',
+      func: async (input) => {
+        console.log('Input for finance calculator:', input);
+        try {
+          let result;
+          const params = JSON.parse(input);
+
+          switch (params.operation) {
+            case 'tax':
+              // Calculate tax: amount * (taxRate / 100)
+              result = params.amount * (params.taxRate / 100);
+              return `Tax amount: ${result.toFixed(2)}. Total with tax: ${(
+                params.amount + result
+              ).toFixed(2)}`;
+
+            case 'tip':
+              // Calculate tip: amount * (tipPercentage / 100)
+              result = params.amount * (params.tipPercentage / 100);
+              return `Tip amount: ${result.toFixed(2)}. Total with tip: ${(
+                params.amount + result
+              ).toFixed(2)}`;
+
+            case 'discount':
+              // Calculate discount: amount * (discountPercentage / 100)
+              result = params.amount * (params.discountPercentage / 100);
+              return `Discount amount: ${result.toFixed(
+                2,
+              )}. Discounted total: ${(params.amount - result).toFixed(2)}`;
+
+            case 'interest':
+              // Calculate simple interest: principal * rate * time / 100
+              result = (params.principal * params.rate * params.time) / 100;
+              return `Interest amount: ${result.toFixed(
+                2,
+              )}. Total with interest: ${(params.principal + result).toFixed(
+                2,
+              )}`;
+
+            case 'installment':
+              // Calculate installment payment: total / numberOfPayments
+              result = params.totalAmount / params.numberOfPayments;
+              return `Monthly installment amount: ${result.toFixed(2)} for ${
+                params.numberOfPayments
+              } payments`;
+
+            case 'currency-conversion':
+              // Calculate currency conversion: amount * exchangeRate
+              result = params.amount * params.exchangeRate;
+              return `Converted amount: ${result.toFixed(2)} ${
+                params.targetCurrency
+              }`;
+
+            default:
+              // For custom calculations, use the generic calculator
+              result = new Function(`return ${params.expression}`)();
+              return `Result: ${result}`;
+          }
+        } catch (e) {
+          return `Error performing financial calculation: ${e.message}. Please check your input format.`;
+        }
+      },
+    }),
+
+    new DynamicTool({
       name: 'format-date',
       description: 'Format a date string or timestamp into a readable format',
       func: async (input) => {

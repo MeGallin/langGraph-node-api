@@ -22,7 +22,7 @@ const createFinanceAgentNode = ({ llm, memory }) => {
     memory,
     systemPrompt: financeSystemPrompt,
     agentName: 'finance',
-    useTools: false,
+    useTools: true,
   });
 };
 
